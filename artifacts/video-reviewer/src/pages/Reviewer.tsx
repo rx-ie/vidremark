@@ -319,55 +319,6 @@ export default function Reviewer() {
               </p>
             </section>
 
-            {/* Captions Section */}
-            <section aria-label="Gospel captions">
-              <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
-                <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800">
-                  <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-300">
-                    <Subtitles className="w-4 h-4 text-amber-400" aria-hidden="true" />
-                    Homily
-                  </h2>
-                  <button
-                    onClick={handleGetCaptions}
-                    disabled={transcribing}
-                    className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 disabled:bg-slate-700 disabled:text-slate-500 text-white transition-colors focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-2 focus:ring-offset-slate-900"
-                    aria-label="Get captions for this video"
-                  >
-                    {transcribing ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
-                    ) : (
-                      <Subtitles className="w-3.5 h-3.5" aria-hidden="true" />
-                    )}
-                    {transcribing ? "Transcribing…" : "Get Captions"}
-                  </button>
-                </div>
-
-                <div className="px-4 py-4">
-                  {!captionSection && !captionError && !transcribing && (
-                    <p className="text-slate-500 text-sm text-center py-6">
-                      Press "Get Captions" to transcribe this video and extract the Homily.
-                    </p>
-                  )}
-                  {transcribing && (
-                    <div className="flex flex-col items-center gap-3 py-8 text-slate-400">
-                      <Loader2 className="w-6 h-6 animate-spin text-amber-400" />
-                      <p className="text-sm">Transcribing video audio — this may take a minute…</p>
-                    </div>
-                  )}
-                  {captionError && (
-                    <p role="alert" className="text-red-400 text-sm py-4 text-center">
-                      {captionError}
-                    </p>
-                  )}
-                  {captionSection && (
-                    <p className="text-slate-200 text-sm leading-relaxed whitespace-pre-wrap">
-                      {captionSection}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </section>
-
             {/* Add Remark */}
             <section aria-label="Add remark">
               <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3">
@@ -482,6 +433,55 @@ export default function Reviewer() {
                   </pre>
                 </div>
               )}
+            </section>
+
+            {/* Captions Section */}
+            <section aria-label="Homily captions">
+              <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800">
+                  <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-300">
+                    <Subtitles className="w-4 h-4 text-amber-400" aria-hidden="true" />
+                    Homily
+                  </h2>
+                  <button
+                    onClick={handleGetCaptions}
+                    disabled={transcribing}
+                    className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 disabled:bg-slate-700 disabled:text-slate-500 text-white transition-colors focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-2 focus:ring-offset-slate-900"
+                    aria-label="Get captions for this video"
+                  >
+                    {transcribing ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
+                    ) : (
+                      <Subtitles className="w-3.5 h-3.5" aria-hidden="true" />
+                    )}
+                    {transcribing ? "Transcribing…" : "Get Captions"}
+                  </button>
+                </div>
+
+                <div className="px-4 py-4">
+                  {!captionSection && !captionError && !transcribing && (
+                    <p className="text-slate-500 text-sm text-center py-6">
+                      Press "Get Captions" to transcribe this video and extract the Homily.
+                    </p>
+                  )}
+                  {transcribing && (
+                    <div className="flex flex-col items-center gap-3 py-8 text-slate-400">
+                      <Loader2 className="w-6 h-6 animate-spin text-amber-400" />
+                      <p className="text-sm">Transcribing video audio — this may take a minute…</p>
+                    </div>
+                  )}
+                  {captionError && (
+                    <p role="alert" className="text-red-400 text-sm py-4 text-center">
+                      {captionError}
+                    </p>
+                  )}
+                  {captionSection && (
+                    <p className="text-slate-200 text-sm leading-relaxed whitespace-pre-wrap">
+                      {captionSection}
+                    </p>
+                  )}
+                </div>
+              </div>
             </section>
           </>
         )}
