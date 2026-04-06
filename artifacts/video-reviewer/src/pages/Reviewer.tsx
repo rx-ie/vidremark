@@ -117,7 +117,7 @@ export default function Reviewer() {
   function buildCopyText(): string {
     if (remarks.length === 0) return "";
     const lines = remarks.map(
-      (r) => `[${formatTimestamp(r.timestamp)}] ${r.text}`
+      (r, i) => `${i + 1}. [${formatTimestamp(r.timestamp)}] ${r.text}`
     );
     return lines.join("\n");
   }
