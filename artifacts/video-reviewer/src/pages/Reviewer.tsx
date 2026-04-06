@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Copy, Plus, Trash2, Check, Film, ClipboardList, Clock } from "lucide-react";
+import { Copy, Plus, Trash2, Check, Film, ClipboardList, Clock, Subtitles, Loader2 } from "lucide-react";
 
 interface Remark {
   id: string;
@@ -36,6 +36,21 @@ function extractDropboxEmbedUrl(url: string): string | null {
   }
 }
 
+const START_PHRASE = "praise to you lord jesus christ";
+const END_PHRASE = "our father";
+
+function extractHomilySection(transcript: string): string | null {
+  const lower = transcript.toLowerCase();
+  const startIdx = lower.indexOf(START_PHRASE);
+  if (startIdx === -1) return null;
+  const afterStart = startIdx + START_PHRASE.length;
+  const endIdx = lower.indexOf(END_PHRASE, afterStart);
+  if (endIdx === -1) {
+    return transcript.slice(afterStart).trim();
+  }
+  return transcript.slice(afterStart, endIdx).trim();
+}
+
 export default function Reviewer() {
   const [videoUrl, setVideoUrl] = useState("");
   const [embedUrl, setEmbedUrl] = useState<string | null>(null);
@@ -47,6 +62,11 @@ export default function Reviewer() {
   const [remarkAdded, setRemarkAdded] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const remarkInputRef = useRef<HTMLTextAreaElement>(null);
+
+  const [transcribing, setTranscribing] = useState(false);
+  const [captionSection, setCaptionSection] = useState<string | null>(null);
+  const [captionError, setCaptionError] = useState<string | null>(null);
+  const [rawVideoUrl, setRawVideoUrl] = useState<string | null>(null);
 
   const captureTimestamp = useCallback(() => {
     if (videoRef.current) {
@@ -81,9 +101,47 @@ export default function Reviewer() {
       return;
     }
     setEmbedUrl(embed);
+    setRawVideoUrl(embed);
     setRemarks([]);
     setCurrentRemark("");
     setCurrentTimestamp(0);
+    setCaptionSection(null);
+    setCaptionError(null);
+  }
+
+  async function handleGetCaptions() {
+    if (!rawVideoUrl) return;
+    setTranscribing(true);
+    setCaptionSection(null);
+    setCaptionError(null);
+    try {
+      const res = await fetch("/api/transcribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ videoUrl: rawVideoUrl }),
+      });
+      const data = await res.json() as { transcript?: string; error?: string };
+      if (!res.ok || data.error) {
+        setCaptionError(data.error ?? "Transcription failed.");
+        return;
+      }
+      if (!data.transcript) {
+        setCaptionError("No transcript returned.");
+        return;
+      }
+      const section = extractHomilySection(data.transcript);
+      if (!section) {
+        setCaptionError(
+          "Could not find the section between \"Praise to you Lord Jesus Christ\" and \"Our Father\" in this video's captions."
+        );
+      } else {
+        setCaptionSection(section);
+      }
+    } catch {
+      setCaptionError("Failed to contact the transcription service.");
+    } finally {
+      setTranscribing(false);
+    }
   }
 
   function handleAddRemark() {
@@ -217,6 +275,56 @@ export default function Reviewer() {
                 <Clock className="w-3.5 h-3.5" aria-hidden="true" />
                 Pause the video to automatically capture the timestamp, then type your remark below.
               </p>
+            </section>
+
+            {/* Captions Section */}
+            <section aria-label="Gospel captions">
+              <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800">
+                  <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-300">
+                    <Subtitles className="w-4 h-4 text-amber-400" aria-hidden="true" />
+                    Captions — Gospel to Our Father
+                  </h2>
+                  <button
+                    onClick={handleGetCaptions}
+                    disabled={transcribing}
+                    className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 disabled:bg-slate-700 disabled:text-slate-500 text-white transition-colors focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-2 focus:ring-offset-slate-900"
+                    aria-label="Get captions for this video"
+                  >
+                    {transcribing ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
+                    ) : (
+                      <Subtitles className="w-3.5 h-3.5" aria-hidden="true" />
+                    )}
+                    {transcribing ? "Transcribing…" : "Get Captions"}
+                  </button>
+                </div>
+
+                <div className="px-4 py-4">
+                  {!captionSection && !captionError && !transcribing && (
+                    <p className="text-slate-500 text-sm text-center py-6">
+                      Press "Get Captions" to transcribe this video and extract the section between
+                      "Praise to you Lord Jesus Christ" and "Our Father".
+                    </p>
+                  )}
+                  {transcribing && (
+                    <div className="flex flex-col items-center gap-3 py-8 text-slate-400">
+                      <Loader2 className="w-6 h-6 animate-spin text-amber-400" />
+                      <p className="text-sm">Transcribing video audio — this may take a minute…</p>
+                    </div>
+                  )}
+                  {captionError && (
+                    <p role="alert" className="text-red-400 text-sm py-4 text-center">
+                      {captionError}
+                    </p>
+                  )}
+                  {captionSection && (
+                    <p className="text-slate-200 text-sm leading-relaxed whitespace-pre-wrap">
+                      {captionSection}
+                    </p>
+                  )}
+                </div>
+              </div>
             </section>
 
             {/* Add Remark */}
