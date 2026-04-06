@@ -5,6 +5,7 @@ import { join } from "path";
 import { createReadStream, unlink } from "fs";
 import { randomUUID } from "crypto";
 import { openai } from "@workspace/integrations-openai-ai-server";
+import { logger } from "../lib/logger";
 
 const router = Router();
 
@@ -29,6 +30,8 @@ router.post("/transcribe", async (req, res) => {
     });
 
     unlink(tmpFile, () => {});
+
+    logger.info({ transcriptPreview: transcription.text.slice(0, 300) }, "Transcription complete");
 
     res.json({ transcript: transcription.text });
   } catch (err) {

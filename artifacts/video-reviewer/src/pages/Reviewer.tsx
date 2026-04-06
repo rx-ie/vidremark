@@ -36,19 +36,62 @@ function extractDropboxEmbedUrl(url: string): string | null {
   }
 }
 
-const START_PHRASE = "praise to you lord jesus christ";
-const END_PHRASE = "our father";
+function normalizeWord(w: string): string {
+  return w.toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+function findPhraseWordIndex(normWords: string[], phraseWords: string[], after = 0): number {
+  outer: for (let i = after; i <= normWords.length - phraseWords.length; i++) {
+    for (let j = 0; j < phraseWords.length; j++) {
+      if (normWords[i + j] !== phraseWords[j]) continue outer;
+    }
+    return i;
+  }
+  return -1;
+}
 
 function extractHomilySection(transcript: string): string | null {
-  const lower = transcript.toLowerCase();
-  const startIdx = lower.indexOf(START_PHRASE);
-  if (startIdx === -1) return null;
-  const afterStart = startIdx + START_PHRASE.length;
-  const endIdx = lower.indexOf(END_PHRASE, afterStart);
-  if (endIdx === -1) {
-    return transcript.slice(afterStart).trim();
+  const words = transcript.split(/\s+/);
+  const normWords = words.map(normalizeWord);
+
+  const startCandidates = [
+    "praise to you lord jesus christ",
+    "praise to you o lord jesus christ",
+    "praise to you lord jesus",
+    "praise to you jesus christ",
+  ].map((p) => p.split(" "));
+
+  const endCandidates = [
+    "our father who art",
+    "our father who are",
+    "our father in heaven",
+    "our father",
+  ].map((p) => p.split(" "));
+
+  let startWordIdx = -1;
+  let startPhraseLen = 0;
+  for (const phrase of startCandidates) {
+    const idx = findPhraseWordIndex(normWords, phrase);
+    if (idx !== -1) {
+      startWordIdx = idx;
+      startPhraseLen = phrase.length;
+      break;
+    }
   }
-  return transcript.slice(afterStart, endIdx).trim();
+  if (startWordIdx === -1) return null;
+
+  const afterStart = startWordIdx + startPhraseLen;
+
+  let endWordIdx = words.length;
+  for (const phrase of endCandidates) {
+    const idx = findPhraseWordIndex(normWords, phrase, afterStart);
+    if (idx !== -1) {
+      endWordIdx = idx;
+      break;
+    }
+  }
+
+  return words.slice(afterStart, endWordIdx).join(" ").trim() || null;
 }
 
 export default function Reviewer() {
@@ -132,7 +175,7 @@ export default function Reviewer() {
       const section = extractHomilySection(data.transcript);
       if (!section) {
         setCaptionError(
-          "Could not find the section between \"Praise to you Lord Jesus Christ\" and \"Our Father\" in this video's captions."
+          "Could not find the Homily in this video's transcript. The phrases \"Praise to you Lord Jesus Christ\" and \"Our Father\" were not detected."
         );
       } else {
         setCaptionSection(section);
@@ -283,7 +326,7 @@ export default function Reviewer() {
                 <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800">
                   <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-300">
                     <Subtitles className="w-4 h-4 text-amber-400" aria-hidden="true" />
-                    Captions — Gospel to Our Father
+                    Homily
                   </h2>
                   <button
                     onClick={handleGetCaptions}
@@ -303,8 +346,7 @@ export default function Reviewer() {
                 <div className="px-4 py-4">
                   {!captionSection && !captionError && !transcribing && (
                     <p className="text-slate-500 text-sm text-center py-6">
-                      Press "Get Captions" to transcribe this video and extract the section between
-                      "Praise to you Lord Jesus Christ" and "Our Father".
+                      Press "Get Captions" to transcribe this video and extract the Homily.
                     </p>
                   )}
                   {transcribing && (
