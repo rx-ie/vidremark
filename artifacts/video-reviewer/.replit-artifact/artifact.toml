@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Parish Video Reviewer"
+version = "1.0.0"
+id = "artifacts/video-reviewer"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 21888
+
+[services.development]
+run = "pnpm --filter @workspace/video-reviewer run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/video-reviewer", "run", "build" ]
+publicDir = "artifacts/video-reviewer/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "21888"
+BASE_PATH = "/"
