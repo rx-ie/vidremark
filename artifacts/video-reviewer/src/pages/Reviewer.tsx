@@ -62,14 +62,9 @@ function extractHomilySection(transcript: string): string | null {
   ].map((p) => p.split(" "));
 
   const endCandidates = [
-    "i believe in one god the father almighty",
-    "i believe in one god",
-    "we believe in one god",
-    "i believe in god the father almighty",
-    "i believe in god the father",
-    "let us stand and profess our faith",
-    "let us profess our faith",
-    "let us now profess our faith",
+    "our father who art in heaven hallowed be thy name",
+    "our father who art in heaven",
+    "our father in heaven hallowed be thy name",
   ].map((p) => p.split(" "));
 
   let startWordIdx = -1;
@@ -179,7 +174,7 @@ export default function Reviewer() {
       const section = extractHomilySection(data.transcript);
       if (!section) {
         setCaptionError(
-          "Could not find the Homily in this video's transcript. Could not detect \"Praise to you Lord Jesus Christ\" or the Creed that follows."
+          "Could not find the Homily in this video's transcript. Could not detect \"Praise to you Lord Jesus Christ\" or \"Our Father, who art in heaven\"."
         );
       } else {
         setCaptionSection(section);
